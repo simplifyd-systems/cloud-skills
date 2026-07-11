@@ -6,19 +6,13 @@ These skills package common Simplifyd Cloud workflows so supported developer too
 
 ## Install
 
-Install all Simplifyd Cloud skills with the hosted installer:
-
-```bash
-curl -fsSL https://console.cloud.simplifyd.com/skills.sh | bash
-```
-
-Or install from this repository with the `skills` CLI:
+Install from this repository with the `skills` CLI:
 
 ```bash
 npx skills add simplifyd-systems/cloud-skills
 ```
 
-Re-running either command updates an existing installation.
+Re-running the command updates an existing installation.
 
 ## Prerequisites
 
