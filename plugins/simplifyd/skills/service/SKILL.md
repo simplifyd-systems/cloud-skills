@@ -1,6 +1,6 @@
 ---
 name: service
-description: Use this skill when the user wants to list, create, view, update, delete, connect to, or configure services on Simplifyd Cloud. Triggers on "list services", "create service", "new service", "what services do I have", "delete service", "scale service", "update service", "service details", "service shell", "add config file", "mount config", "service changeset", "add a postgres database", "add redis", "deploy an nginx container", or similar.
+description: Use this skill when the user wants to list, create, view, update, delete, connect to, configure, or share services privately across Simplifyd Cloud projects. Triggers on "list services", "create service", "new service", "what services do I have", "delete service", "scale service", "update service", "service details", "service shell", "private service access", "cross-project access", "share database with another project", "add config file", "mount config", "service changeset", "add a postgres database", "add redis", "deploy an nginx container", or similar.
 allowed-tools: Bash(edge:*)
 ---
 
@@ -158,6 +158,33 @@ edge service ingress delete api <ingress-slug>
 ```
 
 There is no `edge service ingress list` command in this CLI; use `edge service get <svc> --json` to inspect ingress details if they are included in the service response.
+
+## Manage Cross-Project Private Access
+
+Use private access grants when a service in one project must be reachable from services in another project in the same workspace. Do not create public TCP ingress for this workflow.
+
+Inspect the destination service and existing grants first:
+
+```bash
+edge service get <destination-service> --json
+edge service access list <destination-service> --json
+```
+
+Resolve the consumer project slug with `edge project list --json`, then grant one explicit port and protocol:
+
+```bash
+edge service access grant <destination-service> <consumer-project-slug> --protocol TCP --port 5432 --json
+```
+
+The change applies to a running service without a redeploy. Give the consumer the `private_hostname` returned by `edge service get`; credentials and secret distribution remain separate.
+
+Revoke by immutable grant slug:
+
+```bash
+edge service access revoke <destination-service> <grant-slug>
+```
+
+Before granting or revoking, confirm the destination service, consumer project, protocol, and port with the user. Both projects must belong to the active workspace. Same-project connectivity is already enabled and needs no grant.
 
 ## Manage Static Config Mounts
 
