@@ -136,6 +136,21 @@ edge service ingress add api --protocol gRPC --port 50051 --custom-fqdn grpc.exa
 edge service ingress add api --protocol TCP --port 5432
 ```
 
+For TCP/UDP ingress, optionally restrict which client IPs may connect with repeatable `--allow` flags (IPs or CIDRs; bare IPs are treated as /32). Without `--allow`, the port is open to the whole internet:
+
+```bash
+edge service ingress add api --protocol TCP --port 5432 --allow 203.0.113.7 --allow 198.51.100.0/24
+```
+
+Set or replace the IP allowlist on an existing TCP/UDP ingress port (applies to the live LoadBalancer immediately, no redeploy needed). Use `--clear` to remove the allowlist and open the port to all IPs:
+
+```bash
+edge service ingress allow api <ingress-slug> --allow 203.0.113.7 --allow 198.51.100.0/24
+edge service ingress allow api <ingress-slug> --clear
+```
+
+Recommend an allowlist whenever a user exposes a database or other sensitive service over TCP — especially for production data. Find the ingress slug and current allowlist (`allowed_source_ranges`) via `edge service get <svc> --json`.
+
 Delete ingress:
 
 ```bash
