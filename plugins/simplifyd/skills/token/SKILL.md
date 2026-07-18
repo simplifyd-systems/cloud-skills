@@ -28,7 +28,7 @@ Must be authenticated:
 edge auth whoami --json
 ```
 
-Tokens are user-scoped and tied to an environment. Have the environment ID or context set.
+Tokens are project-scoped and may optionally be restricted to one environment.
 
 ## List Tokens
 
@@ -36,7 +36,7 @@ Tokens are user-scoped and tied to an environment. Have the environment ID or co
 edge token list --json
 ```
 
-Returns: `id`, `slug`, `name`, `env_id`, `created_at`.
+Returns: `slug`, `name`, `scope`, `project`, optional `env`, and `created_at`.
 
 > Note: The full token value is **not** shown after creation — it is only returned once at creation time.
 
@@ -53,6 +53,8 @@ staging-ci  staging-ci  env-def456      2024-02-15
 ```bash
 edge token create "CI Production"
 ```
+
+With no `--env`, the token can access every environment in the active project.
 
 To scope the token to a specific environment:
 
@@ -129,4 +131,4 @@ If operations fail with a token:
 ## Composability
 
 - **After creating a token**: Store in CI/CD secrets and test with `edge status --token <value>`
-- **For per-service access**: Scope the token to a specific environment using `--env` context
+- **For least privilege**: Restrict the token to one environment with `--env`; omit it only when automation genuinely needs multiple project environments
