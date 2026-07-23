@@ -106,11 +106,12 @@ Only one update field may be changed per command:
 ```bash
 edge service update api --name api-v2
 edge service update api --vcpus 500
+edge service update api --replicas 2
 edge service update api --memory 1024
 edge service update api --image sdcr.io/my-registry/api:2.0
 ```
 
-`--vcpus` is in millicores. `--memory` is in MiB. After changing image or resource settings, deploy with `edge deploy up <svc>`.
+`--vcpus` is in millicores. `--replicas` supports 1-10 replicas for Docker services. `--memory` is in MiB. After changing image, replica count, or resource settings, deploy with `edge deploy up <svc>`.
 
 ## Delete Service
 
