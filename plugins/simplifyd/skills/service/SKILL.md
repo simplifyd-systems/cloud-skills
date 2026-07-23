@@ -1,6 +1,6 @@
 ---
 name: service
-description: Use this skill when the user wants to list, create, view, update, delete, connect to, configure, or share services privately across Simplifyd Cloud projects. Triggers on "list services", "create service", "new service", "what services do I have", "delete service", "scale service", "update service", "service details", "service shell", "private service access", "cross-project access", "share database with another project", "add config file", "mount config", "service changeset", "add a postgres database", "add redis", "deploy an nginx container", or similar.
+description: Use this skill when the user wants to list, create, view, update, delete, connect to, configure, or share services privately across Simplifyd Cloud projects. Triggers on "list services", "create service", "new service", "what services do I have", "delete service", "scale service", "update service", "service details", "readiness probe", "health check", "zero-downtime rollout", "service shell", "private service access", "cross-project access", "share database with another project", "add config file", "mount config", "service changeset", "add a postgres database", "add redis", "deploy an nginx container", or similar.
 allowed-tools: Bash(edge:*)
 ---
 
@@ -13,6 +13,7 @@ Create, list, inspect, update, configure, connect to, and delete services within
 - User asks "what services do I have?" or "list my services"
 - User wants to create a Docker, PostgreSQL, or Redis service
 - User wants service details, pending changes, ingress, config mounts, or shell access
+- User wants to inspect, configure, or remove a Docker service readiness probe
 - User wants to update a service name, CPU, memory, or Docker image
 - User wants to delete a service
 
@@ -69,6 +70,17 @@ edge service create --name api --type docker --image nginx --tag latest
 
 The image can include a tag, such as `nginx:latest`, or use `--tag` separately.
 
+When the application exposes an accurate readiness endpoint, configure it during creation so rolling deployments are enabled from the first deployment:
+
+```bash
+edge service create \
+  --name api \
+  --type docker \
+  --image my-org/api \
+  --readiness-path /ready \
+  --readiness-port 8080
+```
+
 ### PostgreSQL Database
 
 ```bash
@@ -98,6 +110,9 @@ edge service create --name cache --type redis --mode replication --replicas 2
 | `--storage` | Storage in GB, for Postgres/Redis |
 | `--mode` | `standalone`, `replication`, or Redis `cluster` |
 | `--replicas` | Redis replicas, 1-10 |
+| `--readiness-path` | Docker HTTP readiness path, such as `/ready` |
+| `--readiness-port` | Docker container port used by readiness |
+| `--readiness-*` tuning flags | Optional initial delay, period, timeout, failure threshold, and success threshold |
 
 ## Update Service
 
@@ -112,6 +127,36 @@ edge service update api --image sdcr.io/my-registry/api:2.0
 ```
 
 `--vcpus` is in millicores. `--replicas` supports 1-10 replicas for Docker services. `--memory` is in MiB. After changing image, replica count, or resource settings, deploy with `edge deploy up <svc>`.
+
+## Manage Readiness Probes
+
+A Docker service uses native Kubernetes rolling deployments only when a readiness probe is configured. Configure it during service creation when the endpoint is known. Without one, deployments use Recreate and downtime is expected. Simplifyd Cloud does not generate a default probe.
+
+Inspect the current configuration first:
+
+```bash
+edge service get api --json
+```
+
+Configure a readiness probe:
+
+```bash
+edge service update api \
+  --readiness-path /ready \
+  --readiness-port 8080
+```
+
+Optional tuning flags are `--readiness-initial-delay`, `--readiness-period`, `--readiness-timeout`, `--readiness-failure-threshold`, and `--readiness-success-threshold`.
+
+Remove it:
+
+```bash
+edge service update api --delete-readiness-probe
+```
+
+Probe changes are staged in the service changeset and take effect on the next deployment. After configuration, run `edge deploy up <svc>` using the deploy skill. Warn the user that removing readiness changes subsequent deployments to Recreate.
+
+Use an endpoint that returns HTTP `200`-`399` only when the application is genuinely ready to receive traffic. The path must begin with `/`, and the port must be the container's listening port.
 
 ## Delete Service
 
